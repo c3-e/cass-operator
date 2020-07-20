@@ -17,7 +17,8 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: CassandraDatacenter is the Schema for the cassandradatacenters API
+      description: CassandraDatacenter is the Schema for the cassandradatacenters
+        API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -34,6 +35,10 @@ spec:
         spec:
           description: CassandraDatacenterSpec defines the desired state of a CassandraDatacenter
           properties:
+            additionalSeeds:
+              items:
+                type: string
+              type: array
             allowMultipleNodesPerWorker:
               description: Turning this option on allows multiple server pods to be
                 created on a k8s worker node. By default the operator creates just
@@ -53,6 +58,15 @@ spec:
             configBuilderImage:
               description: Container image for the config builder init container.
               type: string
+            dseWorkloads:
+              properties:
+                analyticsEnabled:
+                  type: boolean
+                graphEnabled:
+                  type: boolean
+                searchEnabled:
+                  type: boolean
+              type: object
             forceUpgradeRacks:
               description: Rack names in this list are set to the latest StatefulSet
                 configuration even if Cassandra nodes are down. Use this to recover
@@ -5881,6 +5895,17 @@ spec:
                 - name
                 type: object
               type: array
+            reaper:
+              properties:
+                enabled:
+                  type: boolean
+                image:
+                  type: string
+                imagePullPolicy:
+                  description: PullPolicy describes a policy for if/when to pull a
+                    container image
+                  type: string
+              type: object
             replaceNodes:
               description: A list of pod names that need to be replaced.
               items:
@@ -5930,6 +5955,7 @@ spec:
                 server configuration
               enum:
               - 6.8.0
+              - 6.8.1
               - 3.11.6
               - 4.0.0
               type: string
@@ -6079,6 +6105,19 @@ spec:
               description: This secret defines the username and password for the Cassandra
                 server superuser. If it is omitted, we will generate a secret instead.
               type: string
+            users:
+              description: Cassandra users to bootstrap
+              items:
+                properties:
+                  secretName:
+                    type: string
+                  superuser:
+                    type: boolean
+                required:
+                - secretName
+                - superuser
+                type: object
+              type: array
           required:
           - clusterName
           - serverType
@@ -6124,13 +6163,17 @@ spec:
                 properties:
                   hostID:
                     type: string
-                  nodeIP:
-                    type: string
                 type: object
               type: object
             superUserUpserted:
-              description: The timestamp at which CQL superuser credentials were last
-                upserted to the management API
+              description: Deprecated. Use usersUpserted instead. The timestamp at
+                which CQL superuser credentials were last upserted to the management
+                API
+              format: date-time
+              type: string
+            usersUpserted:
+              description: The timestamp at which managed cassandra users' credentials
+                were last upserted to the management API
               format: date-time
               type: string
           type: object

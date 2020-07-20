@@ -55,7 +55,7 @@ Run the generate command and specify the old version to base on. This is for a n
 Once it completes make sure to copy the _current_ CRD in to the newly created directory under `operator/deploy/olm-catalogs/cass-operator/cass-operator.v$VERSION/
 
 ```bash
-operator-sdk generate csv --make-manifests=false --csv-version d.e.f --from-version a.b.c
+operator-sdk generate csv --operator-name cass-operator --make-manifests=false --csv-version d.e.f --from-version a.b.c
 ```
 
 Note, not everything will be copied from the previous version. Check the following keys:
