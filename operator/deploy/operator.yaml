@@ -16,8 +16,8 @@ spec:
       serviceAccountName: cass-operator
       volumes:
       - name: tmpconfig-volume
-         emptyDir:
-           medium: "Memory"
+        emptyDir:
+          medium: "Memory"
       - name: cass-operator-certs-volume
         secret:
           secretName: cass-operator-webhook-config
