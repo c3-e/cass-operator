@@ -7,6 +7,8 @@ package reconciliation
 
 import (
 	"fmt"
+	"k8s.io/api/batch/v1"
+	"os"
 
 	api "github.com/datastax/cass-operator/operator/pkg/apis/cassandra/v1beta1"
 	"github.com/datastax/cass-operator/operator/pkg/httphelper"
@@ -121,7 +123,7 @@ func newStatefulSetForCassandraDatacenterWithDefunctPvcManagedBy(
 	rackName string,
 	dc *api.CassandraDatacenter,
 	replicaCount int) (*appsv1.StatefulSet, error) {
-	
+
 	return newStatefulSetForCassandraDatacenterHelper(rackName, dc, replicaCount, true)
 }
 
@@ -132,7 +134,7 @@ func usesDefunctPvcManagedByLabel(sts *appsv1.StatefulSet) bool {
 		if ok && value == oplabels.ManagedByLabelDefunctValue {
 			usesDefunct = true
 			break
-		} 
+		}
 	}
 
 	return usesDefunct
@@ -360,6 +362,21 @@ func probe(port int, path string, initDelay int, period int) *corev1.Probe {
 	}
 }
 
+func getJvmExtraOpts(dc *api.CassandraDatacenter) string {
+	flags := ""
+
+	if dc.Spec.DseWorkloads.AnalyticsEnabled == true {
+		flags += "-k "
+	}
+	if dc.Spec.DseWorkloads.GraphEnabled == true {
+		flags += "-g "
+	}
+	if dc.Spec.DseWorkloads.SearchEnabled == true {
+		flags += "-s"
+	}
+	return flags
+}
+
 func buildContainers(dc *api.CassandraDatacenter, serverVolumeMounts []corev1.VolumeMount) ([]corev1.Container, error) {
 	// cassandra container
 	cassContainer := corev1.Container{}
@@ -379,6 +396,12 @@ func buildContainers(dc *api.CassandraDatacenter, serverVolumeMounts []corev1.Vo
 		{Name: "MGMT_API_EXPLICIT_START", Value: "true"},
 		// TODO remove this post 1.0
 		{Name: "DSE_MGMT_EXPLICIT_START", Value: "true"},
+	}
+
+	if dc.Spec.ServerType == "dse" && dc.Spec.DseWorkloads != nil {
+		cassContainer.Env = append(
+			cassContainer.Env,
+			corev1.EnvVar{Name: "JVM_EXTRA_OPTS", Value: getJvmExtraOpts(dc)})
 	}
 
 	ports, err := dc.GetContainerPorts()
@@ -404,13 +427,23 @@ func buildContainers(dc *api.CassandraDatacenter, serverVolumeMounts []corev1.Vo
 	// server logger container
 	loggerContainer := corev1.Container{}
 	loggerContainer.Name = "server-system-logger"
-	loggerContainer.Image = "busybox"
+	if baseImageOs := os.Getenv(api.EnvBaseImageOs); baseImageOs != "" {
+		loggerContainer.Image = baseImageOs
+	} else {
+		loggerContainer.Image = "busybox"
+	}
 	loggerContainer.Args = []string{
 		"/bin/sh", "-c", "tail -n+1 -F /var/log/cassandra/system.log",
 	}
 	loggerContainer.VolumeMounts = []corev1.VolumeMount{cassServerLogsMount}
 
-	return []corev1.Container{cassContainer, loggerContainer}, nil
+	containers := []corev1.Container{cassContainer, loggerContainer}
+	if dc.Spec.Reaper != nil && dc.Spec.Reaper.Enabled && dc.Spec.ServerType == "cassandra" {
+		reaperContainer := buildReaperContainer(dc)
+		containers = append(containers, reaperContainer)
+	}
+
+	return containers, nil
 }
 
 func buildInitContainers(dc *api.CassandraDatacenter, rackName string) ([]corev1.Container, error) {
@@ -506,4 +539,46 @@ func buildPodTemplateSpec(dc *api.CassandraDatacenter, zone string, rackName str
 	baseTemplate.Spec.Containers = append(containers, baseTemplate.Spec.Containers...)
 
 	return baseTemplate, nil
+}
+
+func buildInitReaperSchemaJob(dc *api.CassandraDatacenter) *v1.Job {
+	return &v1.Job{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Job",
+			APIVersion: "batch/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: dc.Namespace,
+			Name:      getReaperSchemaInitJobName(dc),
+			Labels:    dc.GetDatacenterLabels(),
+		},
+		Spec: v1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					RestartPolicy: corev1.RestartPolicyOnFailure,
+					Containers: []corev1.Container{
+						{
+							Name:            getReaperSchemaInitJobName(dc),
+							Image:           ReaperSchemaInitJobImage,
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KEYSPACE",
+									Value: ReaperKeyspace,
+								},
+								{
+									Name:  "CONTACT_POINTS",
+									Value: dc.GetSeedServiceName(),
+								},
+								{
+									Name:  "REPLICATION",
+									Value: getReaperReplication(dc),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }

@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"time"
 
+	"golang.org/x/crypto/ssh/terminal"
+
 	shutil "github.com/datastax/cass-operator/mage/sh"
 	mageutil "github.com/datastax/cass-operator/mage/util"
 )
@@ -62,9 +64,7 @@ func (k KCmd) ToCliArgs() []string {
 		args = append(args, fmt.Sprintf("--%s=%s", k, v))
 	}
 	args = append(args, k.Command)
-	for _, r := range k.Args {
-		args = append(args, r)
-	}
+	args = append(args, k.Args...)
 	return args
 }
 
@@ -199,23 +199,48 @@ func PatchJson(resource string, data string) KCmd {
 	return KCmd{Command: "patch", Args: args}
 }
 
-func waitForOutputPattern(k KCmd, pattern string, expected string, seconds int) error {
+func erasePreviousLine() {
+	//cursor up one line
+	fmt.Print("\033[A")
+
+	//erase line
+	fmt.Print("\033[K")
+}
+
+func waitForOutputPattern(k KCmd, pattern string, seconds int) error {
 	re := regexp.MustCompile(pattern)
 	c := make(chan string)
 	timer := time.NewTimer(time.Duration(seconds) * time.Second)
 	cquit := make(chan bool)
 	defer close(cquit)
 
+	counter := 0
+	outputIsTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
 	var actual string
 	var err error
 
 	go func() {
+		printedRerunMsg := false
 		for !re.MatchString(actual) {
 			select {
 			case <-cquit:
+				fmt.Println("")
 				return
 			default:
 				actual, err = k.Output()
+				if outputIsTerminal && counter > 0 {
+					erasePreviousLine()
+
+					if printedRerunMsg {
+						// We need to erase both the new exec output,
+						// as well as our previous "rerunning" line now
+						erasePreviousLine()
+					}
+
+					fmt.Printf("Rerunning previous command (%v)\n", counter)
+					printedRerunMsg = true
+				}
+				counter++
 				// Execute at most once every two seconds
 				time.Sleep(time.Second * 2)
 			}
@@ -226,8 +251,8 @@ func waitForOutputPattern(k KCmd, pattern string, expected string, seconds int) 
 	select {
 	case <-timer.C:
 		var expectedPhrase string
-		expectedPhrase = "Expected to output to contain:"
-		msg := fmt.Sprintf("Timed out waiting for value. %s %s, but got %s.", expectedPhrase, expected, actual)
+		expectedPhrase = "Expected output to match regex: "
+		msg := fmt.Sprintf("Timed out waiting for value. %s '%s', but '%s' did not match", expectedPhrase, pattern, actual)
 		if err != nil {
 			msg = fmt.Sprintf("%s\nThe following error occured while querying k8s: %v", msg, err)
 		}
@@ -239,15 +264,15 @@ func waitForOutputPattern(k KCmd, pattern string, expected string, seconds int) 
 }
 
 func WaitForOutputPattern(k KCmd, pattern string, seconds int) error {
-	return waitForOutputPattern(k, pattern, pattern, seconds)
+	return waitForOutputPattern(k, pattern, seconds)
 }
 
 func WaitForOutput(k KCmd, expected string, seconds int) error {
-	return waitForOutputPattern(k, fmt.Sprintf("^%s$", regexp.QuoteMeta(expected)), expected, seconds)
+	return waitForOutputPattern(k, fmt.Sprintf("^%s$", regexp.QuoteMeta(expected)), seconds)
 }
 
 func WaitForOutputContains(k KCmd, expected string, seconds int) error {
-	return waitForOutputPattern(k, regexp.QuoteMeta(expected), expected, seconds)
+	return waitForOutputPattern(k, regexp.QuoteMeta(expected), seconds)
 }
 
 func DumpAllLogs(path string) KCmd {

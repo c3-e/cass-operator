@@ -41,7 +41,7 @@ func Test_makeImage(t *testing.T) {
 				serverType:    "cassandra",
 				serverVersion: "3.11.6",
 			},
-			want:      "datastax/cassandra-mgmtapi-3_11_6:v0.1.2",
+			want:      "datastax/cassandra-mgmtapi-3_11_6:v0.1.5",
 			errString: "",
 		},
 		{
@@ -63,6 +63,16 @@ func Test_makeImage(t *testing.T) {
 			},
 			want:      "",
 			errString: "server 'dse' and version '6.7.0' do not work together",
+		},
+		{
+			name: "test 6.8.1",
+			args: args{
+				serverImage:   "",
+				serverType:    "dse",
+				serverVersion: "6.8.1",
+			},
+			want:      "datastax/dse-server:6.8.1",
+			errString: "",
 		},
 	}
 	for _, tt := range tests {
@@ -164,7 +174,7 @@ func Test_GenerateBaseConfigString(t *testing.T) {
 					Config:      []byte("{\"cassandra-yaml\":{\"authenticator\":\"AllowAllAuthenticator\",\"batch_size_fail_threshold_in_kb\":1280}}"),
 				},
 			},
-			want:      `{"cassandra-yaml":{"authenticator":"AllowAllAuthenticator","batch_size_fail_threshold_in_kb":1280},"cluster-info":{"name":"exampleCluster","seeds":"exampleCluster-seed-service"},"datacenter-info":{"name":"exampleDC"}}`,
+			want:      `{"cassandra-yaml":{"authenticator":"AllowAllAuthenticator","batch_size_fail_threshold_in_kb":1280},"cluster-info":{"name":"exampleCluster","seeds":"exampleCluster-seed-service"},"datacenter-info":{"graph-enabled":0,"name":"exampleDC","solr-enabled":0,"spark-enabled":0}}`,
 			errString: "",
 		},
 		{
@@ -341,4 +351,43 @@ func TestCassandraDatacenter_SplitRacks_balances_racks_when_no_extra_nodes(t *te
 func TestCassandraDatacenter_SplitRacks_balances_racks_when_some_extra_nodes(t *testing.T) {
 	rackNodeCounts := SplitRacks(13, 5)
 	assert.ElementsMatch(t, rackNodeCounts, []int{3, 3, 3, 2, 2}, "Rack node counts were not balanced")
+}
+
+func TestCassandraDatacenter_GetRackLabels(t *testing.T) {
+	type args struct {
+		rackName string
+	}
+	tests := []struct {
+		name   string
+		cassdc CassandraDatacenter
+		args   args
+		want   map[string]string
+	}{
+		{
+			name: "test GetRackLabels()",
+			cassdc: CassandraDatacenter{
+				Spec: CassandraDatacenterSpec{
+					ClusterName: "exampleCluster",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "exampleDC",
+				},
+			},
+			args: args{
+				rackName: "rack0",
+			},
+			want: map[string]string{
+				ClusterLabel:    "exampleCluster",
+				DatacenterLabel: "exampleDC",
+				RackLabel:       "rack0",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dc := &(tt.cassdc)
+			got := dc.GetRackLabels(tt.args.rackName)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }

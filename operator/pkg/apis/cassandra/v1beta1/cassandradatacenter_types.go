@@ -6,6 +6,7 @@ package v1beta1
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/Jeffail/gabs"
 	"github.com/pkg/errors"
@@ -18,8 +19,6 @@ import (
 )
 
 const (
-	defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.0"
-
 	// ClusterLabel is the operator's label for the cluster name
 	ClusterLabel = "cassandra.datastax.com/cluster"
 
@@ -46,25 +45,84 @@ const (
 // This type exists so there's no chance of pushing random strings to our progress status
 type ProgressState string
 
+const (
+	defaultConfigBuilderImage     = "datastax/cass-config-builder:1.0.1"
+	ubi_defaultConfigBuilderImage = "datastax/cass-config-builder:1.0.1-ubi7"
+
+	cassandra_3_11_6     = "datastax/cassandra-mgmtapi-3_11_6:v0.1.5"
+	cassandra_4_0_0      = "datastax/cassandra-mgmtapi-4_0_0:v0.1.5"
+	ubi_cassandra_3_11_6 = "datastax/cassandra:3.11.6-ubi7"
+	ubi_cassandra_4_0_0  = "datastax/cassandra:4.0-ubi7"
+
+	dse_6_8_0     = "datastax/dse-server:6.8.0"
+	dse_6_8_1     = "datastax/dse-server:6.8.1"
+	ubi_dse_6_8_0 = "datastax/dse-server:6.8.0-ubi7"
+	ubi_dse_6_8_1 = "datastax/dse-server:6.8.1-ubi7"
+
+	EnvBaseImageOs = "BASE_IMAGE_OS"
+)
+
 // getImageForServerVersion tries to look up a known image for a server type and version number.
 // In the event that no image is found, an error is returned
 func getImageForServerVersion(server, version string) (string, error) {
-	const (
-		cassandra_3_11_6 = "datastax/cassandra-mgmtapi-3_11_6:v0.1.2"
-		cassandra_4_0_0  = "datastax/cassandra-mgmtapi-4_0_0:v0.1.2"
-		dse_6_8_0        = "datastax/dse-server:6.8.0"
-	)
-	sv := server + "-" + version
+	baseImageOs := os.Getenv(EnvBaseImageOs)
+
+	var imageCalc func(string) (string, bool)
+	var img string
+	var success bool
+	var errMsg string
+
+	if baseImageOs == "" {
+		imageCalc = getImageForDefaultBaseOs
+		errMsg = fmt.Sprintf("server '%s' and version '%s' do not work together", server, version)
+	} else {
+		// if this operator was compiled using a UBI base image
+		// such as registry.access.redhat.com/ubi7/ubi-minimal:7.8
+		// then we use specific cassandra and init container coordinates
+		// that are built accordingly
+		errMsg = fmt.Sprintf("server '%s' and version '%s', along with the specified base OS '%s', do not work together", server, version, baseImageOs)
+		imageCalc = getImageForUniversalBaseOs
+	}
+
+	img, success = imageCalc(server + "-" + version)
+	if !success {
+		return "", fmt.Errorf(errMsg)
+	}
+
+	return img, nil
+}
+
+func getImageForDefaultBaseOs(sv string) (string, bool) {
 	switch sv {
 	case "dse-6.8.0":
-		return dse_6_8_0, nil
+		return dse_6_8_0, true
+	case "dse-6.8.1":
+		return dse_6_8_1, true
 	case "cassandra-3.11.6":
-		return cassandra_3_11_6, nil
+		return cassandra_3_11_6, true
 	case "cassandra-4.0.0":
-		return cassandra_4_0_0, nil
+		return cassandra_4_0_0, true
 	}
-	err := fmt.Errorf("server '%s' and version '%s' do not work together", server, version)
-	return "", err
+	return "", false
+}
+
+func getImageForUniversalBaseOs(sv string) (string, bool) {
+	switch sv {
+	case "dse-6.8.0":
+		return ubi_dse_6_8_0, true
+	case "dse-6.8.1":
+		return ubi_dse_6_8_1, true
+	case "cassandra-3.11.6":
+		return ubi_cassandra_3_11_6, true
+	case "cassandra-4.0.0":
+		return ubi_cassandra_4_0_0, true
+	}
+	return "", false
+}
+
+type CassandraUser struct {
+	SecretName string `json:"secretName"`
+	Superuser  bool   `json:"superuser"`
 }
 
 // CassandraDatacenterSpec defines the desired state of a CassandraDatacenter
@@ -80,7 +138,7 @@ type CassandraDatacenterSpec struct {
 
 	// Version string for config builder,
 	// used to generate Cassandra server configuration
-	// +kubebuilder:validation:Enum="6.8.0";"3.11.6";"4.0.0"
+	// +kubebuilder:validation:Enum="6.8.0";"6.8.1";"3.11.6";"4.0.0"
 	ServerVersion string `json:"serverVersion"`
 
 	// Cassandra server image name.
@@ -155,8 +213,23 @@ type CassandraDatacenterSpec struct {
 	// roll out.
 	ForceUpgradeRacks []string `json:"forceUpgradeRacks,omitempty"`
 
+	DseWorkloads *DseWorkloads `json:"dseWorkloads,omitempty"`
+
 	// PodTemplate provides customisation options (labels, annotations, affinity rules, resource requests, and so on) for the cassandra pods
 	PodTemplateSpec *corev1.PodTemplateSpec `json:"podTemplateSpec,omitempty"`
+
+	// Cassandra users to bootstrap
+	Users []CassandraUser `json:"users,omitempty"`
+
+	AdditionalSeeds []string `json:"additionalSeeds,omitempty"`
+
+	Reaper *ReaperConfig `json:"reaper,omitempty"`
+}
+
+type DseWorkloads struct {
+	AnalyticsEnabled bool `json:"analyticsEnabled,omitempty"`
+	GraphEnabled     bool `json:"graphEnabled,omitempty"`
+	SearchEnabled    bool `json:"searchEnabled,omitempty"`
 }
 
 type StorageConfig struct {
@@ -186,7 +259,6 @@ type Rack struct {
 
 type CassandraNodeStatus struct {
 	HostID string `json:"hostID,omitempty"`
-	NodeIP string `json:"nodeIP,omitempty"`
 }
 
 type CassandraStatusMap map[string]CassandraNodeStatus
@@ -222,10 +294,16 @@ func NewDatacenterCondition(conditionType DatacenterConditionType, status corev1
 type CassandraDatacenterStatus struct {
 	Conditions []DatacenterCondition `json:"conditions,omitempty"`
 
-	// The timestamp at which CQL superuser credentials
-	// were last upserted to the management API
+	// Deprecated. Use usersUpserted instead. The timestamp at
+	// which CQL superuser credentials were last upserted to the
+	// management API
 	// +optional
 	SuperUserUpserted metav1.Time `json:"superUserUpserted,omitempty"`
+
+	// The timestamp at which managed cassandra users' credentials
+	// were last upserted to the management API
+	// +optional
+	UsersUpserted metav1.Time `json:"usersUpserted,omitempty"`
 
 	// The timestamp when the operator last started a Server node
 	// with the management API
@@ -279,6 +357,14 @@ type ManagementApiAuthConfig struct {
 	// other strategy configs (e.g. Cert Manager) go here
 }
 
+type ReaperConfig struct {
+	Enabled bool `json:"enabled,omitempty"`
+
+	Image string `json:"image,omitempty"`
+
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CassandraDatacenterList contains a list of CassandraDatacenter
@@ -293,10 +379,15 @@ func init() {
 }
 
 func (dc *CassandraDatacenter) GetConfigBuilderImage() string {
-	if dc.Spec.ConfigBuilderImage == "" {
-		return defaultConfigBuilderImage
+	var image string
+	if dc.Spec.ConfigBuilderImage != "" {
+		image = dc.Spec.ConfigBuilderImage
+	} else if baseImageOs := os.Getenv(EnvBaseImageOs); baseImageOs != "" {
+		image = ubi_defaultConfigBuilderImage
+	} else {
+		image = defaultConfigBuilderImage
 	}
-	return dc.Spec.ConfigBuilderImage
+	return image
 }
 
 // GetServerImage produces a fully qualified container image to pull
@@ -348,7 +439,7 @@ func (dc *CassandraDatacenter) GetConditionStatus(conditionType DatacenterCondit
 func (status *CassandraDatacenterStatus) SetCondition(condition DatacenterCondition) {
 	conditions := status.Conditions
 	added := false
-	for i, _ := range status.Conditions {
+	for i := range status.Conditions {
 		if status.Conditions[i].Type == condition.Type {
 			status.Conditions[i] = condition
 			added = true
@@ -419,7 +510,32 @@ func (dc *CassandraDatacenter) GetConfigAsJSON() (string, error) {
 	// We use the cluster seed-service name here for the seed list as it will
 	// resolve to the seed nodes. This obviates the need to update the
 	// cassandra.yaml whenever the seed nodes change.
-	modelValues := serverconfig.GetModelValues([]string{dc.GetSeedServiceName()}, dc.Spec.ClusterName, dc.Name)
+	seeds := []string{dc.GetSeedServiceName()}
+	seeds = append(seeds, dc.Spec.AdditionalSeeds...)
+
+	graphEnabled := 0
+	solrEnabled := 0
+	sparkEnabled := 0
+
+	if dc.Spec.ServerType == "dse" && dc.Spec.DseWorkloads != nil {
+		if dc.Spec.DseWorkloads.AnalyticsEnabled == true {
+			sparkEnabled = 1
+		}
+		if dc.Spec.DseWorkloads.GraphEnabled == true {
+			graphEnabled = 1
+		}
+		if dc.Spec.DseWorkloads.SearchEnabled == true {
+			solrEnabled = 1
+		}
+	}
+
+	modelValues := serverconfig.GetModelValues(
+		seeds,
+		dc.Spec.ClusterName,
+		dc.Name,
+		graphEnabled,
+		solrEnabled,
+		sparkEnabled)
 
 	var modelBytes []byte
 

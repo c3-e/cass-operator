@@ -5,9 +5,6 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
-	"encoding/base64"
-	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
@@ -33,12 +30,9 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	controllerRuntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -127,6 +121,7 @@ func main() {
 	ctx := context.Background()
 	// Become the leader before proceeding
 	err = leader.Become(ctx, "cass-operator-lock")
+
 	if err != nil {
 		log.Error(err, "could not become leader")
 		os.Exit(1)
@@ -137,6 +132,10 @@ func main() {
 	}
 	if err = ensureWebhookCertificate(cfg, namespace); err != nil {
 		log.Error(err, "Failed to ensure webhook CA configuration")
+	}
+
+	if err = readBaseOsIntoEnv(); err != nil {
+		log.Error(err, "Failed to read base OS into env")
 	}
 
 	// Set default manager options
@@ -207,6 +206,36 @@ func main() {
 	}
 }
 
+func readBaseOsIntoEnv() error {
+	baseOsArgFilePath := "/var/lib/cass-operator/base_os"
+
+	info, err := os.Stat(baseOsArgFilePath)
+	if os.IsNotExist(err) {
+		msg := fmt.Sprintf("Could not locate base OS arg file at %s", baseOsArgFilePath)
+		err = fmt.Errorf("%s. %v", msg, err)
+		return err
+	}
+
+	if info.IsDir() {
+		msg := fmt.Sprintf("Base OS arg path is a directory not a file: %s", baseOsArgFilePath)
+		err = fmt.Errorf("%s. %v", msg, err)
+		return err
+	}
+
+	rawVal, err := ioutil.ReadFile(baseOsArgFilePath)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to read base OS arg file at %s", baseOsArgFilePath)
+		err = fmt.Errorf("%s. %v", msg, err)
+		return err
+	}
+
+	baseOs := strings.TrimSpace(string(rawVal))
+	os.Setenv(api.EnvBaseImageOs, baseOs)
+	log.Info(fmt.Sprintf("%s set to '%s'", api.EnvBaseImageOs, baseOs))
+
+	return nil
+}
+
 // addMetrics will create the Services and Service Monitors to allow the operator export the metrics by using
 // the Prometheus operator
 func addMetrics(ctx context.Context, cfg *rest.Config) {
@@ -275,109 +304,4 @@ func serveCRMetrics(cfg *rest.Config, operatorNs string) error {
 		return err
 	}
 	return nil
-}
-
-func ensureWebhookCertificate(cfg *rest.Config, namespace string) (err error) {
-	var contents []byte
-	if contents, err = ioutil.ReadFile(serverCertFile); err == nil && len(contents) > 0 {
-		certpool := x509.NewCertPool()
-		var block *pem.Block
-		if block, _ = pem.Decode(contents); err == nil && block != nil {
-			var cert *x509.Certificate
-			if cert, err = x509.ParseCertificate(block.Bytes); err == nil {
-				certpool.AddCert(cert)
-				log.Info("Attempting to validate operator CA")
-				verify_opts := x509.VerifyOptions{
-					DNSName: fmt.Sprintf("cassandradatacenter-webhook-service.%s.svc", namespace),
-					Roots:   certpool,
-				}
-				if _, err = cert.Verify(verify_opts); err == nil {
-					log.Info("Found valid certificate for webhook")
-					return nil
-				}
-			}
-		}
-	}
-	return updateSecretAndWebhook(cfg, namespace)
-}
-
-func updateSecretAndWebhook(cfg *rest.Config, namespace string) (err error) {
-	var key, cert string
-	var client crclient.Client
-	if key, cert, err = getNewCertAndKey(namespace); err == nil {
-		if client, err = crclient.New(cfg, crclient.Options{}); err == nil {
-			secret := &v1.Secret{}
-			err = client.Get(context.Background(), crclient.ObjectKey{
-				Namespace: namespace,
-				Name:      "cass-operator-webhook-config",
-			}, secret)
-			if err == nil {
-				secret.StringData = make(map[string]string)
-				secret.StringData["tls.key"] = key
-				secret.StringData["tls.crt"] = cert
-				if err = client.Update(context.Background(), secret); err == nil {
-					log.Info("TLS secret for webhook updated")
-					if err = ioutil.WriteFile(altServerCertFile, []byte(cert), 0600); err == nil {
-						if err = ioutil.WriteFile(altServerKeyFile, []byte(key), 0600); err == nil {
-							certDir = altCertDir
-							log.Info("TLS secret updated in pod mount")
-							return updateWebhook(client, cert, namespace)
-						}
-					}
-				}
-
-			}
-		}
-	}
-	log.Error(err, "Failed to update certificates")
-	return err
-}
-
-func updateWebhook(client crclient.Client, cert, namespace string) (err error) {
-	u := &unstructured.Unstructured{}
-	u.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "admissionregistration.k8s.io",
-		Kind:    "ValidatingWebhookConfiguration",
-		Version: "v1beta1",
-	})
-	err = client.Get(context.Background(), crclient.ObjectKey{
-		Name: "cassandradatacenter-webhook-registration",
-	}, u)
-	if err == nil {
-		var webhook_slice []interface{}
-		var webhook map[string]interface{}
-		var ok, present bool
-		webhook_slice, present, err = unstructured.NestedSlice(u.Object, "webhooks")
-		webhook, ok = webhook_slice[0].(map[string]interface{})
-		if !ok || !present || err != nil {
-			log.Info(fmt.Sprintf("Error loading webhook for modification: %+v %+v %+v", ok, present, err))
-			return err
-		}
-		if err = unstructured.SetNestedField(webhook, namespace, "clientConfig", "service", "namespace"); err == nil {
-			if err = unstructured.SetNestedField(webhook, base64.StdEncoding.EncodeToString([]byte(cert)), "clientConfig", "caBundle"); err == nil {
-				webhook_slice[0] = webhook
-				if err = unstructured.SetNestedSlice(u.Object, webhook_slice, "webhooks"); err == nil {
-					err = client.Update(context.Background(), u)
-				}
-			}
-		}
-	}
-	return err
-}
-
-func ensureWebhookConfigVolume(cfg *rest.Config, namespace string) (err error) {
-	var pod *v1.Pod
-	var client crclient.Client
-	if client, err = crclient.New(cfg, crclient.Options{}); err == nil {
-		if pod, err = k8sutil.GetPod(context.Background(), client, namespace); err == nil {
-			for _, volume := range pod.Spec.Volumes {
-				if "cass-operator-certs-volume" == volume.Name {
-					return nil
-				}
-			}
-			log.Error(fmt.Errorf("Secrets volume not found, unable to start webhook"), "")
-			os.Exit(1)
-		}
-	}
-	return err
 }

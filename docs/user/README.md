@@ -78,7 +78,7 @@ following:
 Generally, `cluster-admin` privileges are required to register a
 `CustomResourceDefinition` (CRD). All privileges needed by the operator are
 present within the
-[operator-manifests YAML](cass-operator-manifests.yaml).
+[operator-manifests YAML](/docs/user).
 _Note the operator does not require `cluster-admin` privileges, only the user
 defining the CRD requires those permissions._
 
@@ -318,7 +318,7 @@ for your `CassandraDatacenter` resource, you can use the `serverType`, `serverVe
 spec properties.
 
 `serverType` is required and must be either `dse` or `cassandra`. `serverVersion` is also required,
-and the supported version for DSE is `6.8.0` and for Cassandra it is `3.11.6`. More versions
+and the supported versions for DSE are `6.8.0`/`6.8.1` and for Cassandra it is `3.11.6`. More versions
 will be supported in the future.
 
 If `serverImage` is not specified, a default image for the provided `serverType` and
@@ -333,7 +333,7 @@ metadata:
   name: dtcntr
 spec:
   serverType: dse
-  serverVersion: 6.8.0
+  serverVersion: 6.8.1
 
 ```
 
@@ -359,7 +359,7 @@ metadata:
   name: dtcntr
 spec:
   serverType: dse
-  serverVersion: 6.8.0
+  serverVersion: 6.8.1
   serverImage: private-docker-registry.example.com/dse-img/dse:5f6e7d8c
 ```
 
