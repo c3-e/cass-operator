@@ -20,11 +20,12 @@ spec:
   customresourcedefinitions:
     owned:
     - name: cassandradatacenters.cassandra.datastax.com
+      displayName: Cassandra Datacenter
       description: |
         CassandraDatacenter is the Schema for the cassandradatacenters API
       kind: CassandraDatacenter
       version: v1beta1
-resources: 
+      resources: 
           - kind: Deployment
             version: v1
             name: ""
