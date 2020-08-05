@@ -306,3 +306,8 @@ func ExecOnPod(podName string, args ...string) KCmd {
 	execArgs = append(execArgs, args...)
 	return KCmd{Command: "exec", Args: execArgs}
 }
+
+func GetNodeNameForPod(podName string) KCmd {
+	json := "jsonpath={.spec.nodeName}"
+	return Get(fmt.Sprintf("pod/%s", podName)).FormatOutput(json)
+}

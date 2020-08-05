@@ -6,6 +6,7 @@ package tolerations
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,12 +16,14 @@ import (
 )
 
 var (
-	testName    = "Tolerations"
-	opNamespace = "test-tolerations"
-	dc1Name     = "dc1"
-	dc1Yaml     = "../testdata/tolerations-dc.yaml"
-	dc1Resource = fmt.Sprintf("CassandraDatacenter/%s", dc1Name)
-	ns          = ginkgo_util.NewWrapper(testName, opNamespace)
+	testName     = "Tolerations"
+	opNamespace  = "test-tolerations"
+	dc1Name      = "dc1"
+	dc1Yaml      = "../testdata/tolerations-dc.yaml"
+	dc1Resource  = fmt.Sprintf("CassandraDatacenter/%s", dc1Name)
+	pod1Name     = "cluster1-dc1-r1-sts-0"
+	pod1Resource = fmt.Sprintf("pod/%s", pod1Name)
+	ns           = ginkgo_util.NewWrapper(testName, opNamespace)
 )
 
 func TestLifecycle(t *testing.T) {
@@ -47,17 +50,18 @@ var _ = Describe(testName, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// For now, let's taint 5 of the 6 nodes, and put the operator on the first
-			for i := 2; i <= 6; i++ {
-				node := fmt.Sprintf("kind-worker%d", i)
-				step := fmt.Sprintf("tainting %s", node)
-				k := kubectl.Taint(
-					node,
-					"test",
-					"testvalue",
-					"NoSchedule")
-				ns.ExecAndLog(step, k)
-			}
-
+			/*
+				for i := 2; i <= 6; i++ {
+					node := fmt.Sprintf("kind-worker%d", i)
+					step := fmt.Sprintf("tainting %s", node)
+					k := kubectl.Taint(
+						node,
+						"test",
+						"testvalue",
+						"NoSchedule")
+					ns.ExecAndLog(step, k)
+				}
+			*/
 			step := "setting up cass-operator resources via helm chart"
 			ns.HelmInstall("../../charts/cass-operator-chart")
 
@@ -68,6 +72,34 @@ var _ = Describe(testName, func() {
 			ns.ExecAndLog(step, k)
 
 			ns.WaitForDatacenterReady(dc1Name)
+
+			// Add a taint to the node
+			k = kubectl.GetNodeNameForPod(pod1Name)
+			node1Name, _, err := ns.ExecVCapture(k)
+			if err != nil {
+				panic(err)
+			}
+
+			// node.vmware.com/drain=planned-downtime:NoSchedule
+			step = fmt.Sprintf("tainting node: %s", node1Name)
+			k = kubectl.Taint(
+				node1Name,
+				"node.vmware.com/drain",
+				"planned-downtime",
+				"NoSchedule")
+			ns.ExecAndLog(step, k)
+
+			time.Sleep(5 * time.Minute)
+
+			step = "remove taint from node"
+			json := `
+			{
+				"spec": {
+					"taints": []
+				}
+			}`
+			k = kubectl.PatchMerge(pod1Resource, json)
+			ns.ExecAndLog(step, k)
 		})
 	})
 })
