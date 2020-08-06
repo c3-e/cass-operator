@@ -79,6 +79,7 @@ var _ = Describe(testName, func() {
 			if err != nil {
 				panic(err)
 			}
+			node1Resource := fmt.Sprintf("node/%s", node1Name)
 
 			// node.vmware.com/drain=planned-downtime:NoSchedule
 			step = fmt.Sprintf("tainting node: %s", node1Name)
@@ -89,17 +90,20 @@ var _ = Describe(testName, func() {
 				"NoSchedule")
 			ns.ExecAndLog(step, k)
 
-			time.Sleep(5 * time.Minute)
+			time.Sleep(5 * time.Second)
 
-			step = "remove taint from node"
+			//step = "remove taint from node"
 			json := `
 			{
 				"spec": {
-					"taints": []
+					"taints": null
 				}
 			}`
-			k = kubectl.PatchMerge(pod1Resource, json)
-			ns.ExecAndLog(step, k)
+			k = kubectl.PatchMerge(node1Resource, json)
+			err = k.ExecV()
+			if err != nil {
+				panic(err)
+			}
 		})
 	})
 })
