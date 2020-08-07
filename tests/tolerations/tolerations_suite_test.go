@@ -49,19 +49,6 @@ var _ = Describe(testName, func() {
 			err := kubectl.CreateNamespace(opNamespace).ExecV()
 			Expect(err).ToNot(HaveOccurred())
 
-			// For now, let's taint 5 of the 6 nodes, and put the operator on the first
-			/*
-				for i := 2; i <= 6; i++ {
-					node := fmt.Sprintf("kind-worker%d", i)
-					step := fmt.Sprintf("tainting %s", node)
-					k := kubectl.Taint(
-						node,
-						"test",
-						"testvalue",
-						"NoSchedule")
-					ns.ExecAndLog(step, k)
-				}
-			*/
 			step := "setting up cass-operator resources via helm chart"
 			ns.HelmInstall("../../charts/cass-operator-chart")
 
@@ -92,7 +79,6 @@ var _ = Describe(testName, func() {
 
 			time.Sleep(5 * time.Second)
 
-			//step = "remove taint from node"
 			json := `
 			{
 				"spec": {

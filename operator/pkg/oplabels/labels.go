@@ -3,10 +3,14 @@
 
 package oplabels
 
+import (
+	"k8s.io/apimachinery/pkg/labels"
+)
+
 const (
-	ManagedByLabel              = "app.kubernetes.io/managed-by"
-	ManagedByLabelValue         = "cass-operator"
-	ManagedByLabelDefunctValue  = "cassandra-operator"
+	ManagedByLabel             = "app.kubernetes.io/managed-by"
+	ManagedByLabelValue        = "cass-operator"
+	ManagedByLabelDefunctValue = "cassandra-operator"
 )
 
 func AddManagedByLabel(m map[string]string) {
@@ -20,4 +24,11 @@ func AddDefunctManagedByLabel(m map[string]string) {
 func HasManagedByCassandraOperatorLabel(m map[string]string) bool {
 	v, ok := m[ManagedByLabel]
 	return ok && v == ManagedByLabelValue
+}
+
+func GetManagedBySelector() labels.Selector {
+	return labels.SelectorFromSet(
+		labels.Set{
+			ManagedByLabel: ManagedByLabelValue,
+		})
 }

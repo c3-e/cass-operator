@@ -1529,9 +1529,9 @@ func (rc *ReconciliationContext) findStartedNotReadyNodes() (bool, error) {
 
 func (rc *ReconciliationContext) copyPodCredentials(pod *corev1.Pod, jksBlob []byte) error {
 	_, err := rc.retrieveSecret(types.NamespacedName{
-			Name:      fmt.Sprintf("%s-keystore", rc.Datacenter.Name),
-			Namespace: rc.Datacenter.Namespace,
-		})
+		Name:      fmt.Sprintf("%s-keystore", rc.Datacenter.Name),
+		Namespace: rc.Datacenter.Namespace,
+	})
 
 	if err == nil { // This secret already exists, nothing to do
 		return nil
@@ -1802,7 +1802,6 @@ func (rc *ReconciliationContext) listPods(selector map[string]string) (*corev1.P
 	rc.ReqLogger.Info("reconcile_racks::listPods")
 
 	listOptions := &client.ListOptions{
-		Namespace:     rc.Datacenter.Namespace,
 		LabelSelector: labels.SelectorFromSet(selector),
 	}
 
