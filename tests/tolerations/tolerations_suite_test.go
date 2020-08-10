@@ -18,10 +18,10 @@ import (
 var (
 	testName     = "Tolerations"
 	opNamespace  = "test-tolerations"
-	dc1Name      = "dc1"
-	dc1Yaml      = "../testdata/tolerations-dc.yaml"
+	dc1Name      = "dc2"
+	dc1Yaml      = "../testdata/default-single-rack-2-node-dc.yaml"
 	dc1Resource  = fmt.Sprintf("CassandraDatacenter/%s", dc1Name)
-	pod1Name     = "cluster1-dc1-r1-sts-0"
+	pod1Name     = "cluster2-dc2-r1-sts-0"
 	pod1Resource = fmt.Sprintf("pod/%s", pod1Name)
 	ns           = ginkgo_util.NewWrapper(testName, opNamespace)
 )
