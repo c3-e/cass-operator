@@ -19,7 +19,6 @@ import (
 	helm_util "github.com/datastax/cass-operator/mage/helm"
 	"github.com/datastax/cass-operator/mage/kubectl"
 	mageutil "github.com/datastax/cass-operator/mage/util"
-	"github.com/datastax/cass-operator/mage/config"
 )
 
 const (
