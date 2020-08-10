@@ -1990,15 +1990,7 @@ func (rc *ReconciliationContext) ReconcileAllRacks() (reconcile.Result, error) {
 	logger := rc.ReqLogger
 	logger.Info("reconcile_racks::Apply")
 
-	podList, err := rc.listPods(rc.Datacenter.GetClusterLabels())
-	if err != nil {
-		logger.Error(err, "error listing all pods in the cluster")
-	}
-
-	rc.clusterPods = PodPtrsFromPodList(podList)
-
-	dcSelector := rc.Datacenter.GetDatacenterLabels()
-	rc.dcPods = FilterPodListByLabels(rc.clusterPods, dcSelector)
+	// Note: rc.clusterPods is now populated in check_nodes.go
 
 	endpointData := rc.getCassMetadataEndpoints()
 
