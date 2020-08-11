@@ -35,9 +35,11 @@ func (rc *ReconciliationContext) calculateReconciliationActions() (reconcile.Res
 
 	rc.ReqLogger.Info("handler::calculateReconciliationActions")
 
-	if err := rc.checkNodeTaints(); err != nil {
-		return result.Error(err).Output()
-	}
+	/*
+		if err := rc.checkNodeTaints(); err != nil {
+			return result.Error(err).Output()
+		}
+	*/
 
 	// Check if the CassandraDatacenter was marked to be deleted
 	if result := rc.ProcessDeletion(); result.Completed() {
