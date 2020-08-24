@@ -280,6 +280,7 @@ func newStatefulSetForCassandraDatacenterHelper(
 			Labels: pvcLabels,
 			Name:   PvcName,
 		},
+		// This spec is passed from the cassdc.yaml file
 		Spec: *dc.Spec.StorageConfig.CassandraDataVolumeClaimSpec,
 	}}
 
@@ -511,7 +512,7 @@ func buildContainers(dc *api.CassandraDatacenter, serverVolumeMounts []corev1.Vo
 	serverVolumeMounts = append(serverVolumeMounts, cassServerLogsMount)
 	serverVolumeMounts = append(serverVolumeMounts, corev1.VolumeMount{
 		Name:      PvcName,
-		MountPath: "/var/lib/cassandra",
+		MountPath: "/c3/cassandra",
 	})
 	serverVolumeMounts = append(serverVolumeMounts, corev1.VolumeMount{
 		Name:      "encryption-cred-storage",
@@ -693,6 +694,15 @@ func addVolumes(dc *api.CassandraDatacenter, baseTemplate *corev1.PodTemplateSpe
 		EmptyDir: &corev1.EmptyDirVolumeSource{},
 	}
 
+	vServerData := corev1.Volume{}
+	vServerData.Name = PvcName
+	vServerData.VolumeSource = corev1.VolumeSource{
+		//EmptyDir: &corev1.EmptyDirVolumeSource{},
+		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+			ClaimName: PvcName,
+		},
+	}
+
 	vServerEncryption := corev1.Volume{}
 	vServerEncryption.Name = "encryption-cred-storage"
 	vServerEncryption.VolumeSource = corev1.VolumeSource{
@@ -700,7 +710,7 @@ func addVolumes(dc *api.CassandraDatacenter, baseTemplate *corev1.PodTemplateSpe
 			SecretName: fmt.Sprintf("%s-keystore", dc.Name)},
 	}
 
-	volumes := []corev1.Volume{vServerConfig, vServerLogs, vServerEncryption}
+	volumes := []corev1.Volume{vServerConfig, vServerLogs, vServerData, vServerEncryption}
 	baseTemplate.Spec.Volumes = append(baseTemplate.Spec.Volumes, volumes...)
 	return volumes
 
