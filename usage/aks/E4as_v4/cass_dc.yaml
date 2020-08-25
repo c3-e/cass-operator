@@ -20,12 +20,41 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 100Gi
+          storage: 1000Gi
   config:
     cassandra-yaml:
       authenticator: org.apache.cassandra.auth.PasswordAuthenticator
       authorizer: org.apache.cassandra.auth.CassandraAuthorizer
       role_manager: org.apache.cassandra.auth.CassandraRoleManager
+      commitlog_segment_size_in_mb: 512
+      concurrent_writes: 64
+      memtable_allocation_type: offheap_objects
+      memtable_flush_writers: 4
+      trickle_fsync: true
+      start_rpc: true
+      auto_snapshot: false
+      batch_size_warn_threshold_in_kb: 50
+      batch_size_fail_threshold_in_kb: 500
+      concurrent_compactors: 2
+      compaction_throughput_mb_per_sec: 0
+      read_request_timeout_in_ms: 30000
+      write_request_timeout_in_ms: 30000
+      request_timeout_in_ms: 60000
+      phi_convict_threshold: 12
+      native_transport_max_threads: 128
+      native_transport_max_frame_size_in_mb: 1024
+      max_value_size_in_mb: 1024
     jvm-options:
       initial_heap_size: "8G"
       max_heap_size: "16G"
+      max_gc_pause_millis: 1000
+      initiating_heap_occupancy_percent: 60
+      parallel_gc_threads: 4
+      conc_gc_threads: 4
+      parallel_ref_proc_enabled: true
+      always_pre_touch: true
+      use_t_lab: true
+      resize_t_lab: true
+      use_biased_locking: true
+      max_tenuring_threshold: 10
+      Dcom.sun.management.jmxremote.authenticate: false
