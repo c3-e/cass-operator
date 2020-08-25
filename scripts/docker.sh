@@ -7,7 +7,7 @@ mage operator:buildDocker
 
 # Tag image
 image=$( docker images | grep "datastax/cass-operator" | awk '{print $3}' | head -n1 )
-docker tag $image locked-registry.c3.ai/datastax/cass-operator:1.3.1
+docker tag $image locked-registry.c3.ai/datastax/cass-operator:1.4.0
 
 # Push image
-docker push locked-registry.c3.ai/datastax/cass-operator:1.3.1
+docker push locked-registry.c3.ai/datastax/cass-operator:1.4.0

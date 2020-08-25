@@ -6470,7 +6470,7 @@ spec:
           value: cass-operator
         - name: SKIP_VALIDATING_WEBHOOK
           value: "FALSE"
-        image: locked-registry.c3.ai/datastax/cass-operator:1.3.1
+        image: locked-registry.c3.ai/datastax/cass-operator:1.4.0
         imagePullPolicy: Always
         livenessProbe:
           exec:
