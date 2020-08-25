@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+# Script to use local manifests to bring up cass-operator
+set -eo pipefail
 
 kubectl apply -f docs/user/cass-operator-manifests-v1.16.yaml
 
-kubectl -n cass-operator apply -f operator/example-cassdc-yaml/cassandra-3.11.6/c3-cassdc.yaml
+kubectl -n cass-operator apply -f usage/eks/c3-cassdc.yaml

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Script to bring down cass-operator and cassdcs
+set -eo pipefail
 
 kubectl delete cassdcs --all-namespaces --all
 
