@@ -51,10 +51,11 @@ spec:
       initiating_heap_occupancy_percent: 60
       parallel_gc_threads: 4
       conc_gc_threads: 4
-      parallel_ref_proc_enabled: true
       always_pre_touch: true
-      use_t_lab: true
-      resize_t_lab: true
+      use_tlb: true
+      resize_tlb: true
       use_biased_locking: true
       max_tenuring_threshold: 10
       Dcom.sun.management.jmxremote.authenticate: false
+      additional-jvm-opts:
+      - "-XX:+ParallelRefProcEnabled"
