@@ -1,15 +1,3 @@
-#
-# This is an example YAML profile for cassandra-stress
-#
-# insert data
-# cassandra-stress user profile=/home/jake/stress1.yaml ops(insert=1)
-#
-# read, using query simple1:
-# cassandra-stress profile=/home/jake/stress1.yaml ops(simple1=1)
-#
-# mixed workload (90/10)
-# cassandra-stress user profile=/home/jake/stress1.yaml ops(insert=1,simple1=9)
-
 keyspace: stresscql
 
 #
@@ -31,18 +19,107 @@ table_definition: |
         name text,
         choice boolean,
         date timestamp,
-        address inet,
-        dbl double,
         lval bigint,
         ival int,
         uid timeuuid,
-        value blob,
-        PRIMARY KEY((name,choice), date, address, dbl, lval, ival, uid)
+        col1 text,
+        col2 boolean,
+        col3 text,
+        col4 int,
+        col5 text,
+        col6 double,
+        col7 int,
+        col8 text,
+        col9 text,
+        col10 int,
+        col11 boolean,
+        col12 text,
+        col13 text,
+        col14 text,
+        col15 text,
+        col16 int,
+        col17 double,
+        col18 int,
+        col19 text,
+        col20 timestamp,
+        col21 text,
+        col22 text,
+        col23 int,
+        col24 int,
+        col25 boolean,
+        col26 int,
+        col27 text,
+        col28 text,
+        col29 ascii,
+        col30 text,
+        col31 timestamp,
+        col32 ascii,
+        col33 text,
+        col34 text,
+        col35 ascii,
+        col36 ascii,
+        col37 boolean,
+        col38 timestamp,
+        col39 text,
+        col40 text,
+        col41 text,
+        col42 bigint,
+        col43 timestamp,
+        col44 text,
+        col45 text,
+        col46 text,
+        col47 text,
+        col48 text,
+        col49 bigint,
+        col51 double,
+        col52 bigint,
+        col53 bigint,
+        col54 text,
+        col55 bigint,
+        col56 bigint,
+        col57 text,
+        col58 boolean,
+        col59 boolean,
+        col61 boolean,
+        col62 boolean,
+        col63 text,
+        col64 timestamp,
+        col65 boolean,
+        col66 text,
+        col67 text,
+        col68 boolean,
+        col69 boolean,
+        col71 double,
+        col72 timestamp,
+        col73 timestamp,
+        col74 boolean,
+        col75 timestamp,
+        col76 text,
+        col77 text,
+        col78 double,
+        col79 text,
+        col81 text,
+        col82 boolean,
+        col83 double,
+        col84 double,
+        col85 text,
+        col86 text,
+        col87 text,
+        col88 text,
+        col89 double,
+        col91 double,
+        col92 text,
+        col93 double,
+        col94 double,
+        col95 double,
+        col96 text,
+        col97 double,
+        col98 text,
+        col99 text,
+        col100 bigint,
+        PRIMARY KEY((name,choice,date), lval, ival, uid)
   ) 
     WITH compaction = { 'class':'LeveledCompactionStrategy' }
-#    AND compression = { 'sstable_compression' : '' }
-#    AND comment='A table of many types to test wide rows'
-
 #
 # Optional meta information on the generated columns in the above table
 # The min and max only apply to text and blob types
@@ -63,21 +140,196 @@ table_definition: |
 #
 columnspec:
   - name: name
-    size: uniform(1..10)
-    population: uniform(1..10)     # the range of unique values to select for the field (default is 100Billion)
+    size: uniform(100..1000)
   - name: date
-    cluster: uniform(20..40)
+    size: uniform(20..40)
   - name: lval
-    population: gaussian(1..1000)
-    cluster: uniform(1..4)
+    size: gaussian(1..100)
+  - name: ival
+    size: gaussian(1..1000)
+  - name: uid
+    size: uniform(20..40)
+  - name: col1
+    size: exp(1..100)
+  - name: col3
+    size: gaussian(10..500)
+  - name: col4
+    size: gaussian(60000..1000000)
+  - name: col5
+    size: uniform(100..500)
+  - name: col6
+    size: gaussian(10000..100000)
+  - name: col7
+    size: uniform(1..200)
+  - name: col8
+    size: uniform(1..600)
+  - name: col9
+    size: uniform(1..400)
+  - name: col10
+    size: uniform(1..500)
+  - name: col12
+    size: gaussian(100..500)
+  - name: col13
+    size: gaussian(1..500)
+  - name: col14
+    size: gaussian(100..500)
+  - name: col15
+    size: gaussian(1..500)
+  - name: col16
+    size: gaussian(1..500)
+  - name: col17
+    size: uniform(1..500)
+  - name: col18
+    size: gaussian(1..500)
+  - name: col19
+    size: gaussian(1..500)
+  - name: col20
+    size: gaussian(1..500)
+  - name: col21
+    size: gaussian(1..500)
+  - name: col22
+    size: gaussian(1..500)
+  - name: col23
+    size: gaussian(1..500)
+  - name: col24
+    size: gaussian(1..500)
+  - name: col26
+    size: uniform(1..500)
+  - name: col27
+    size: gaussian(1..100)
+  - name: col28
+    size: uniform(1..100)
+  - name: col29
+    size: uniform(1..100)
+  - name: col30
+    size: gaussian(1..500)
+  - name: col31
+    size: gaussian(1..500)
+  - name: col32
+    size: uniform(1..500)
+  - name: col33
+    size: gaussian(1..500)
+  - name: col34
+    size: uniform(1..500)
+  - name: col35
+    size: gaussian(1..500)
+  - name: col36
+    size: uniform(1..500)
+  - name: col38
+    size: gaussian(1..500)
+  - name: col39
+    size: gaussian(1..500)
+  - name: col40
+    size: gaussian(1..500)
+  - name: col41
+    size: gaussian(1..1000)
+  - name: col42
+    size: gaussian(1..500)
+  - name: col43
+    size: gaussian(1..500)
+  - name: col44
+    size: gaussian(1..500)
+  - name: col45
+    size: uniform(1..1000)
+  - name: col46
+    size: gaussian(1..500)
+  - name: col47
+    size: gaussian(1..500)
+  - name: col48
+    size: gaussian(1..500)
+  - name: col49
+    size: gaussian(1..500)
+  - name: col50
+    size: gaussian(1..500)
+  - name: col51
+    size: gaussian(1..500)
+  - name: col52
+    size: gaussian(1..500)
+  - name: col53
+    size: gaussian(1..500)
+  - name: col54
+    size: gaussian(1..500)
+  - name: col55
+    size: gaussian(1..500)
+  - name: col56
+    size: gaussian(1..500)
+  - name: col57
+    size: gaussian(1..500)
+  - name: col63
+    size: gaussian(1..500)
+  - name: col64
+    size: gaussian(1..500)
+  - name: col66
+    size: gaussian(100..500)
+  - name: col67
+    size: gaussian(1..500)
+  - name: col70
+    size: gaussian(100..500)
+  - name: col71
+    size: gaussian(1..500)
+  - name: col72
+    size: gaussian(1..500)
+  - name: col73
+    size: gaussian(1..500)
+  - name: col74
+    size: gaussian(1..500)
+  - name: col75
+    size: gaussian(1..500)
+  - name: col76
+    size: gaussian(1..500)
+  - name: col77
+    size: gaussian(1..500)
+  - name: col78
+    size: gaussian(1..500)
+  - name: col79
+    size: gaussian(1..500)
+  - name: col80
+    size: gaussian(1..500)
+  - name: col81
+    size: gaussian(1..500)
+  - name: col83
+    size: gaussian(100..500)
+  - name: col84
+    size: gaussian(1..500)
+  - name: col85
+    size: gaussian(1..500)
+  - name: col86
+    size: gaussian(100..500)
+  - name: col87
+    size: gaussian(1..500)
+  - name: col88
+    size: gaussian(100..500)
+  - name: col89
+    size: gaussian(1..500)
+  - name: col90
+    size: gaussian(1..500)
+  - name: col91
+    size: gaussian(1..500)
+  - name: col92
+    size: gaussian(1..500)
+  - name: col93
+    size: gaussian(100..500)
+  - name: col94
+    size: gaussian(1..500000)
+  - name: col95
+    size: gaussian(1..500)
+  - name: col96
+    size: gaussian(100..500)
+  - name: col97
+    size: gaussian(1..500)
+  - name: col98
+    size: gaussian(1..500)
+  - name: col99
+    size: gaussian(1..500)
+  - name: col100
+    size: gaussian(1..500)
+
+# We purposedely did not use any distribution setting like cluster and population to use default ones
 
 insert:
-  partitions: fixed(1)       # number of unique partitions to update in a single operation
-                                  # if batchcount > 1, multiple batches will be used but all partitions will
-                                  # occur in all batches (unless they finish early); only the row counts will vary
-  batchtype: UNLOGGED             # type of batch to use
-  select: fixed(1)/500       # uniform chance any single generated CQL row will be visited in a partition;
-                                  # generated for each partition independently, each time we visit it
+  partitions: fixed(1)       # create 1 insert batch per partition
+  batchtype: UNLOGGED        # type of batch to use
+  select: fixed(500)/500     # insert 500 rows out of 500 maximum possible rows
 
 #
 # A list of queries you wish to run against the schema
