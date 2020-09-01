@@ -13,6 +13,10 @@ spec:
   managementApiAuth:
     insecure: {}
   size: 3
+  resources:
+    requests:
+      memory: 25Gi
+      cpu: 3
   storageConfig:
     cassandraDataVolumeClaimSpec:
       storageClassName: server-storage
