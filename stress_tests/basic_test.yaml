@@ -23,10 +23,10 @@ table_definition: |
       contentn double,
       contents text,
       version bigint static,
-      PRIMARY KEY (id)
+      PRIMARY KEY (id, columnname)
   ) WITH CLUSTERING ORDER BY (columnname ASC)
+      AND caching = {'keys':'ALL', 'rows_per_partition':'NONE'}
       AND bloom_filter_fp_chance = 0.1
-      AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
       AND comment = ''
       AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}
       AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.SnappyCompressor'}
@@ -37,12 +37,12 @@ table_definition: |
       AND memtable_flush_period_in_ms = 0
       AND min_index_interval = 128
       AND read_repair_chance = 0.0
-      AND speculative_retry = '99.0PERCENTILE';# Optional meta information on the generated columns in the above table
+      AND speculative_retry = '99.0PERCENTILE';
 
 # The min and max only apply to text and blob types
 # The distribution field represents the total unique population
 # distribution of that column across rows.  Supported types are
-# 
+#
 #      EXP(min..max)                        An exponential distribution over the range [min..max]
 #      EXTREME(min..max,shape)              An extreme value (Weibull) distribution over the range [min..max]
 #      GAUSSIAN(min..max,stdvrng)           A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng
@@ -57,16 +57,16 @@ table_definition: |
 #
 columnspec:
   - name: id
-    size: gaussian(80..200000)
+    size: gaussian(80..65035)
   - name: columnname
-    size: gaussian(50..300)
+    size: gaussian(50..100)
   - name: contentb
     size: gaussian(50000..100000)
   - name: contentn
     size: gaussian(20..40000)
   - name: contents
     size: gaussian(1000..10000)
-  - name: 
+  - name: version
     size: gaussian(10..500)
 
 # We purposedely did not use any distribution setting like cluster and population to use default ones
