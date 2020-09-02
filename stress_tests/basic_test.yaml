@@ -61,7 +61,7 @@ columnspec:
   - name: columnname
     size: gaussian(50..300)
   - name: contentb
-    size: gaussian(500..1000)
+    size: gaussian(50000..100000)
   - name: contentn
     size: gaussian(20..1000)
   - name: contents
