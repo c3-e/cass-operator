@@ -59,13 +59,13 @@ columnspec:
   - name: id
     size: gaussian(80..65035)
   - name: columnname
-    size: gaussian(50..100)
+    size: gaussian(50..300)
   - name: contentb
-    size: gaussian(50000..100000)
+    size: gaussian(500..1000)
   - name: contentn
-    size: gaussian(20..40000)
+    size: gaussian(20..1000)
   - name: contents
-    size: gaussian(1000..10000)
+    size: gaussian(1000..1000)
   - name: version
     size: gaussian(10..500)
 
@@ -74,7 +74,7 @@ columnspec:
 insert:
   partitions: fixed(1)       # create 1 insert batch per partition
   batchtype: UNLOGGED        # type of batch to use
-  select: fixed(500)/500     # insert 500 rows out of 500 maximum possible rows
+  select: fixed(1)/1
 
 #
 # A list of queries you wish to run against the schema
