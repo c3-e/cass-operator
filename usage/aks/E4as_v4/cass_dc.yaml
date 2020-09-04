@@ -1,4 +1,3 @@
-# Sized to work on 3 k8s workers nodes with 1 core / 4 GB RAM
 # See neighboring example-cassdc-full.yaml for docs for each parameter
 apiVersion: cassandra.datastax.com/v1beta1
 kind: CassandraDatacenter
@@ -9,10 +8,10 @@ spec:
   serverType: cassandra
   serverVersion: "3.11.7"
   nodeSelector:
-    vmtype: e4
+    vmtype: e4pool
   managementApiAuth:
     insecure: {}
-  size: 3
+  size: 6
   resources:
     requests:
       memory: 25Gi
@@ -24,7 +23,7 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 2000Gi
+          storage: 1000Gi
   config:
     cassandra-yaml:
       # Values to Optimize for PSR tests
