@@ -101,8 +101,8 @@ spec:
       concurrent_counter_writes: 32
       concurrent_materialized_view_writes: 32
     jvm-options:
-      initial_heap_size: "16G"
-      max_heap_size: "32G"
+      initial_heap_size: "8G"
+      max_heap_size: "16G"
       max_gc_pause_millis: 1000
       initiating_heap_occupancy_percent: 60
       parallel_gc_threads: 4
