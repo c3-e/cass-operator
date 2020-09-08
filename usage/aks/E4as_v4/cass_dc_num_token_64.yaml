@@ -2,13 +2,13 @@
 apiVersion: cassandra.datastax.com/v1beta1
 kind: CassandraDatacenter
 metadata:
-  name: dc2
+  name: dc3
 spec:
-  clusterName: cluster2
+  clusterName: cluster3
   serverType: cassandra
   serverVersion: "3.11.7"
   nodeSelector:
-    vmtype: e4pool2
+    vmtype: e4pool3
   managementApiAuth:
     insecure: {}
   size: 6
@@ -116,3 +116,7 @@ spec:
       Dcom.sun.management.jmxremote.authenticate: false
       additional-jvm-opts:
       - "-XX:+ParallelRefProcEnabled"
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=7199"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+

@@ -113,6 +113,8 @@ spec:
       resize_tlb: true
       use_biased_locking: true
       max_tenuring_threshold: 10
-      Dcom.sun.management.jmxremote.authenticate: false
       additional-jvm-opts:
       - "-XX:+ParallelRefProcEnabled"
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=7199"
+      - "-Dcom.sun.management.jmxremote.ssl=false"

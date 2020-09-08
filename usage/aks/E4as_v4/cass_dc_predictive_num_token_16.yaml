@@ -28,6 +28,7 @@ spec:
     cassandra-yaml:
       # Values to Optimize for PSR tests
       num_tokens: 16
+      initial_token: -9223372036854775808,-8070450532247928832,-6917529027641081856,-5764607523034234880,-4611686018427387904,-3458764513820540928,-2305843009213693952,-1152921504606846976,0,1152921504606846976,2305843009213693952,3458764513820540928,4611686018427387904,5764607523034234880,6917529027641081856,8070450532247928832
       allocate_tokens_for_keyspace: system_distributed
       hinted_handoff_throttle_in_kb: 1024
       max_hints_delivery_threads: 2
@@ -102,8 +103,8 @@ spec:
       concurrent_counter_writes: 32
       concurrent_materialized_view_writes: 32
     jvm-options:
-      initial_heap_size: "16G"
-      max_heap_size: "32G"
+      initial_heap_size: "8G"
+      max_heap_size: "16G"
       max_gc_pause_millis: 1000
       initiating_heap_occupancy_percent: 60
       parallel_gc_threads: 4
@@ -116,3 +117,6 @@ spec:
       Dcom.sun.management.jmxremote.authenticate: false
       additional-jvm-opts:
       - "-XX:+ParallelRefProcEnabled"
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=7199"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
