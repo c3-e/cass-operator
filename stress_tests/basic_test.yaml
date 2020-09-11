@@ -59,7 +59,7 @@ columnspec:
   - name: id
     size: gaussian(80..65035)
   - name: columnname
-    size: gaussian(50..300)
+    size: uniform(50..60)
   - name: contentb
     size: gaussian(500000..1500000)
   - name: contentn
@@ -67,7 +67,7 @@ columnspec:
   - name: contents
     size: gaussian(1000..1000)
   - name: version
-    size: gaussian(10..500)
+    size: uniform(30..50)
 
 # We purposedely did not use any distribution setting like cluster and population to use default ones
 
@@ -81,7 +81,7 @@ insert:
 #
 queries:
    simple1:
-      cql: select * from nts_ops_test where columnname = ? and contentb = ? LIMIT 100
+      cql: select * from nts_ops_test where columnname = ? and version = ? LIMIT 500 ALLOW FILTERING
       fields: samerow             # samerow or multirow (select arguments from the same row, or randomly from all rows in the partition)
    range1:
       cql: select * from nts_ops_test where columnname = ? and contentb = ? and version >= ? LIMIT 100
