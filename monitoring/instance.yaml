@@ -1,0 +1,29 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: default
+  labels:
+    prometheus: k8s
+spec:
+  retention: 1y
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        name: prometheus-default-db
+      spec:
+        storageClassName: server-storage
+        resources:
+          requests:
+            storage: 1000Gi
+  replicas: 2
+  serviceAccountName: prometheus_sa
+  securityContext:
+    runAsUser: 65534
+    fsGroup: 65534
+  serviceMonitorSelector:
+    matchLabels:
+      cassandra.datastax.com/cluster: cluster1
+  ruleSelector: {}
+  alerting:
+    alertmanagers: []
