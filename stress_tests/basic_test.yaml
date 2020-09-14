@@ -61,13 +61,13 @@ columnspec:
   - name: columnname
     size: uniform(50..60)
   - name: contentb
-    size: gaussian(500000..1500000)
+    size: gaussian(1000000..1500000)
   - name: contentn
     size: gaussian(20..10000)
   - name: contents
     size: gaussian(1000..1000)
   - name: version
-    size: uniform(30..50)
+    size: uniform(30..100)
 
 # We purposedely did not use any distribution setting like cluster and population to use default ones
 
@@ -80,9 +80,6 @@ insert:
 # A list of queries you wish to run against the schema
 #
 queries:
-   simple1:
-      cql: select * from nts_ops_test where columnname = ? and version = ? LIMIT 500 ALLOW FILTERING
+   simpleread:
+      cql: select * from nts_ops_test where version = ? LIMIT 100 ALLOW FILTERING
       fields: samerow             # samerow or multirow (select arguments from the same row, or randomly from all rows in the partition)
-   range1:
-      cql: select * from nts_ops_test where columnname = ? and contentb = ? and version >= ? LIMIT 100
-      fields: multirow            # samerow or multirow (select arguments from the same row, or randomly from all rows in the partition)
