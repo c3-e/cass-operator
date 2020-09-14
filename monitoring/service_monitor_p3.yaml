@@ -4,7 +4,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     cassandra.datastax.com/cluster: cluster-name
-  name: mcac-cluster
+  name: mcac-cluster-3
   namespace: cass-operator
 spec:
   endpoints:
@@ -293,7 +293,8 @@ spec:
     targetPort: 9103
   selector:
     matchLabels:
-      cassandra.datastax.com/cluster: cluster1
+      cassandra.datastax.com/cluster: cluster3
   targetLabels:
   - cassandra.datastax.com/cluster
   - cassandra.datastax.com/datacenter
+
