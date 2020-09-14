@@ -23,7 +23,7 @@ spec:
     fsGroup: 65534
   serviceMonitorSelector:
     matchLabels:
-      cassandra.datastax.com/cluster: cluster1
+      cassandra.datastax.com/cluster: cluster-name
   ruleSelector: {}
   alerting:
     alertmanagers: []
