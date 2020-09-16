@@ -2,13 +2,13 @@
 apiVersion: cassandra.datastax.com/v1beta1
 kind: CassandraDatacenter
 metadata:
-  name: dc2
+  name: dc6
 spec:
-  clusterName: cluster2
+  clusterName: cluster6
   serverType: cassandra
   serverVersion: "3.11.7"
   nodeSelector:
-    vmtype: e4pool2
+    vmtype: e4pool7
   managementApiAuth:
     insecure: {}
   size: 6
@@ -28,7 +28,6 @@ spec:
     cassandra-yaml:
       # Values to Optimize for PSR tests
       num_tokens: 4
-      initial_token: -9223372036854775808,-4611686018427387904,0,4611686018427387904
       allocate_tokens_for_keyspace: system_distributed
       hinted_handoff_throttle_in_kb: 1024
       max_hints_delivery_threads: 2
@@ -103,8 +102,8 @@ spec:
       concurrent_counter_writes: 32
       concurrent_materialized_view_writes: 32
     jvm-options:
-      initial_heap_size: "8G"
-      max_heap_size: "16G"
+      initial_heap_size: "7G"
+      max_heap_size: "13G"
       max_gc_pause_millis: 1000
       initiating_heap_occupancy_percent: 60
       parallel_gc_threads: 4
