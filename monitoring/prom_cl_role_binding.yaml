@@ -8,5 +8,5 @@ roleRef:
   name: prometheus
 subjects:
 - kind: ServiceAccount
-  name: prometheus_sa
+  name: prometheus-sa
   namespace: cass-operator

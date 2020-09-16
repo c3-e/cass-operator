@@ -17,7 +17,7 @@ spec:
           requests:
             storage: 1000Gi
   replicas: 2
-  serviceAccountName: prometheus_sa
+  serviceAccountName: prometheus-sa
   securityContext:
     runAsUser: 65534
     fsGroup: 65534
