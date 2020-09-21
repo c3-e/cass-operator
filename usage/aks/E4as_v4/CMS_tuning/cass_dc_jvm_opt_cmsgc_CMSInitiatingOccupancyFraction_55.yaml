@@ -2,13 +2,13 @@
 apiVersion: cassandra.datastax.com/v1beta1
 kind: CassandraDatacenter
 metadata:
-  name: dc8
+  name: dc31
 spec:
-  clusterName: cluster8
+  clusterName: cluster31
   serverType: cassandra
   serverVersion: "3.11.7"
   nodeSelector:
-    vmtype: e4pool7
+    vmtype: e4pool3
   managementApiAuth:
     insecure: {}
   size: 6
@@ -29,7 +29,7 @@ spec:
       # Values to Optimize for PSR tests
       num_tokens: 256
       hinted_handoff_throttle_in_kb: 1024
-      max_hints_delivery_threads: 8
+      max_hints_delivery_threads: 2
       max_hint_window_in_ms: 10800000
       cdc_enabled: false
       commitlog_sync: periodic
@@ -102,8 +102,11 @@ spec:
       concurrent_counter_writes: 32
       concurrent_materialized_view_writes: 32
     jvm-options:
+      garbage_collector: "CMS"
+      cms_initiating_occupancy_fraction: 55
       initial_heap_size: "7G"
       max_heap_size: "13G"
+      heap_size_young_generation: "6G"
       max_gc_pause_millis: 1000
       initiating_heap_occupancy_percent: 60
       parallel_gc_threads: 4
