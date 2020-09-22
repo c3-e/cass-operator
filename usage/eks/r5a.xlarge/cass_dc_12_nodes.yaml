@@ -8,7 +8,7 @@ spec:
   serverType: cassandra
   serverVersion: "3.11.7"
   nodeSelector:
-    pool: pool3
+    pool: pool1
   managementApiAuth:
     insecure: {}
   size: 12
