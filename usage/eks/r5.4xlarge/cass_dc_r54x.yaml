@@ -1,0 +1,121 @@
+# See neighboring example-cassdc-full.yaml for docs for each parameter
+apiVersion: cassandra.datastax.com/v1beta1
+kind: CassandraDatacenter
+metadata:
+  name: dc14
+spec:
+  clusterName: cluster14
+  serverType: cassandra
+  serverVersion: "3.11.7"
+  nodeSelector:
+    pool: r54x
+  managementApiAuth:
+    insecure: {}
+  size: 6
+  resources:
+    requests:
+      memory: 25Gi
+      cpu: 3
+  storageConfig:
+    cassandraDataVolumeClaimSpec:
+      storageClassName: server-storage
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1000Gi
+  config:
+    cassandra-yaml:
+      # Values to Optimize for PSR tests
+      num_tokens: 256
+      hinted_handoff_throttle_in_kb: 1024
+      max_hints_delivery_threads: 2
+      max_hint_window_in_ms: 10800000
+      cdc_enabled: false
+      commitlog_sync: periodic
+      commitlog_sync_period_in_ms: 10000
+      commitlog_segment_size_in_mb: 32
+      memtable_allocation_type: heap_buffers
+      rpc_keepalive: true
+      thrift_framed_transport_size_in_mb: 15
+      windows_timer_interval: 1
+      tombstone_warn_threshold: 1000
+      tombstone_failure_threshold: 100000
+      batch_size_warn_threshold_in_kb: 5
+      batch_size_fail_threshold_in_kb: 50
+      back_pressure_enabled: false
+      back_pressure_strategy:
+        - class_name: org.apache.cassandra.net.RateBasedBackPressure
+          parameters:
+            - high_ratio: 0.90
+              factor: 5
+              flow: FAST
+      trickle_fsync: false
+      trickle_fsync_interval_in_kb: 10240
+      # Values By default matching c3 config
+      compaction_throughput_mb_per_sec: 0
+      read_request_timeout_in_ms: 30000
+      write_request_timeout_in_ms: 30000
+      request_timeout_in_ms: 60000
+      range_request_timeout_in_ms: 30000
+      memtable_flush_writers: 4
+      start_rpc: true
+      rpc_address: 0.0.0.0
+      auto_snapshot: false
+      hints_flush_period_in_ms: 10000
+      max_hints_file_size_in_mb: 128
+      batchlog_replay_throttle_in_kb: 1024
+      key_cache_save_period: 14400
+      row_cache_size_in_mb: 0
+      row_cache_save_period: 0
+      counter_cache_save_period: 7200
+      index_summary_resize_interval_in_minutes: 60
+      column_index_size_in_kb: 64
+      column_index_cache_size_in_kb: 2
+      sstable_preemptive_open_interval_in_mb: 50
+      counter_write_request_timeout_in_ms: 5000
+      cas_contention_timeout_in_ms: 1000
+      truncate_request_timeout_in_ms: 60000
+      slow_query_log_timeout_in_ms: 500
+      endpoint_snitch: SimpleSnitch
+      dynamic_snitch_update_interval_in_ms: 100
+      dynamic_snitch_reset_interval_in_ms: 600000
+      dynamic_snitch_badness_threshold: 0.1
+      inter_dc_tcp_nodelay: false
+      tracetype_query_ttl: 86400
+      tracetype_repair_ttl: 604800
+      enable_user_defined_functions: false
+      enable_scripted_user_defined_functions: false
+      unlogged_batch_across_partitions_warn_threshold: 10
+      compaction_large_partition_warning_threshold_mb: 100
+      gc_warn_threshold_in_ms: 1000
+      rpc_server_type: sync
+      incremental_backups: false
+      concurrent_compactors: 2
+      phi_convict_threshold: 12
+      native_transport_max_threads: 128
+      native_transport_max_frame_size_in_mb: 1024
+      max_value_size_in_mb: 1024
+      # Values to optimize following Nodes type
+      concurrent_reads: 32
+      concurrent_writes: 32
+      concurrent_counter_writes: 32
+      concurrent_materialized_view_writes: 32
+    jvm-options:
+      initial_heap_size: "7G"
+      max_heap_size: "13G"
+      max_gc_pause_millis: 1000
+      initiating_heap_occupancy_percent: 60
+      parallel_gc_threads: 4
+      conc_gc_threads: 4
+      always_pre_touch: true
+      use_tlb: true
+      resize_tlb: true
+      use_biased_locking: true
+      max_tenuring_threshold: 10
+      Dcom.sun.management.jmxremote.authenticate: false
+      additional-jvm-opts:
+      - "-XX:+ParallelRefProcEnabled"
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=7199"
+      - "-Dcom.sun.management.jmxremote.ssl=false"

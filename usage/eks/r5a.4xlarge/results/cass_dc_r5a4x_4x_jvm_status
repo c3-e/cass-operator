@@ -1,0 +1,12 @@
+Datacenter: datacenter1
+=======================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address      Load       Tokens       Owns (effective)  Host ID                               Rack
+UN  10.0.12.133  13.29 GiB  256          49.6%             03f27237-d970-4933-8841-ae967b554ad5  rack1
+UN  10.0.11.25   13.31 GiB  256          47.9%             313ed668-d868-46b1-a50d-49dd321757d6  rack1
+UN  10.0.10.154  15.24 GiB  256          53.6%             89b8623e-57a8-410e-87f4-40189de1ccda  rack1
+UN  10.0.12.203  13.24 GiB  256          49.1%             71eed426-dbfc-4db7-b9d1-c82c1dfde375  rack1
+UN  10.0.10.235  13.25 GiB  256          49.7%             dc2dbd4f-cb1a-425b-afd9-f2159884490c  rack1
+UN  10.0.11.79   15.08 GiB  256          50.2%             2fade43c-7761-4e67-9405-42e40249e45d  rack1
+
