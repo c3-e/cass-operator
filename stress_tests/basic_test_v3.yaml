@@ -1,0 +1,88 @@
+keyspace: stresscql
+
+#
+# The CQL for creating a keyspace (optional if it already exists)
+#
+keyspace_definition: |
+  CREATE KEYSPACE stresscql WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};
+
+#
+# Table info
+#
+table: nts_ops_test
+
+#
+# The CQL for creating a table you wish to stress (optional if it already exists)
+#
+table_definition: |
+  CREATE TABLE nts_ops_test (
+      id text,
+      columnname text,
+      contentb blob,
+      contentbool boolean,
+      contentn double,
+      contents text,
+      version bigint static,
+      PRIMARY KEY (id, columnname)
+  ) WITH CLUSTERING ORDER BY (columnname ASC)
+      AND caching = {'keys':'ALL', 'rows_per_partition':'NONE'}
+      AND bloom_filter_fp_chance = 0.1
+      AND comment = ''
+      AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'}
+      AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.SnappyCompressor'}
+      AND dclocal_read_repair_chance = 0.1
+      AND default_time_to_live = 0
+      AND gc_grace_seconds = 86400
+      AND max_index_interval = 2048
+      AND memtable_flush_period_in_ms = 0
+      AND min_index_interval = 128
+      AND read_repair_chance = 0.0
+      AND speculative_retry = '99.0PERCENTILE';
+
+# The min and max only apply to text and blob types
+# The distribution field represents the total unique population
+# distribution of that column across rows.  Supported types are
+#
+#      EXP(min..max)                        An exponential distribution over the range [min..max]
+#      EXTREME(min..max,shape)              An extreme value (Weibull) distribution over the range [min..max]
+#      GAUSSIAN(min..max,stdvrng)           A gaussian/normal distribution, where mean=(min+max)/2, and stdev is (mean-min)/stdvrng
+#      GAUSSIAN(min..max,mean,stdev)        A gaussian/normal distribution, with explicitly defined mean and stdev
+#      UNIFORM(min..max)                    A uniform distribution over the range [min, max]
+#      FIXED(val)                           A fixed distribution, always returning the same value
+#      Aliases: extr, gauss, normal, norm, weibull
+#
+#      If preceded by ~, the distribution is inverted
+#
+# Defaults for all columns are size: uniform(4..8), population: uniform(1..100B), cluster: fixed(1)
+#
+columnspec:
+  - name: id
+    size: gaussian(35000..36000)
+  - name: columnname
+    size: uniform(50..60)
+  - name: contentb
+    size: gaussian(1000000..1500000)
+  - name: contentn
+    size: gaussian(20..10000)
+  - name: contents
+    size: gaussian(1000..1000)
+  - name: version
+    size: uniform(1000..10000)
+
+# We purposedely did not use any distribution setting like cluster and population to use default ones
+
+insert:
+  partitions: fixed(1)       # create 1 insert batch per partition
+  batchtype: UNLOGGED        # type of batch to use
+  select: fixed(1)/1
+
+#
+# A list of queries you wish to run against the schema
+#
+queries:
+   simpleread:
+      cql: select * from nts_ops_test where id = ? LIMIT 100 ALLOW FILTERING
+      fields: samerow             # samerow or multirow (select arguments from the same row, or randomly from all rows in the partition)
+   simpledelete:
+      cql: delete from nts_ops_test where id = ?
+      fields: samerow
